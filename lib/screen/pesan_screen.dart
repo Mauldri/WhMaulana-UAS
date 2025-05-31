@@ -1,31 +1,56 @@
 import 'package:flutter/material.dart';
-import 'package:whazlansaja/data_saya.dart';
 
-class PesanScreen extends StatelessWidget {
-  const PesanScreen({super.key});
+class PesanScreen extends StatefulWidget {
+  final Map<String, dynamic> chatData;
+
+  const PesanScreen({super.key, required this.chatData});
+
+  @override
+  State<PesanScreen> createState() => _PesanScreenState();
+}
+
+class _PesanScreenState extends State<PesanScreen> {
+  late List<Map<String, dynamic>> messages;
+  final TextEditingController _messageController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Ambil data pesan dari chatData
+    messages = widget.chatData['messages'].cast<Map<String, dynamic>>();
+  }
+
+  void _sendMessage() {
+    final message = _messageController.text.trim();
+    if (message.isNotEmpty) {
+      setState(() {
+        // Tambahkan pesan baru ke daftar pesan
+        messages.add({'from': 1, 'message': message});
+      });
+      _messageController.clear();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final chatData = widget.chatData;
 
     return Scaffold(
       appBar: AppBar(
         leadingWidth: 29,
         elevation: 2,
-        title: const ListTile(
-          contentPadding: EdgeInsets.all(0),
+        title: ListTile(
+          contentPadding: EdgeInsets.zero,
           leading: CircleAvatar(
-            backgroundImage:
-                AssetImage('assets/gambar_dosen/Azlan, S.Kom., M.Kom.jpg'),
+            backgroundImage: AssetImage(chatData['avatar']),
             radius: 16,
           ),
           title: Text(
-            'Azlan, S.Kom., M.Kom',
+            chatData['full_name'],
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          subtitle: Text('06.30'),
+          subtitle: const Text('06.30'),
         ),
         actions: [
           IconButton(onPressed: () {}, icon: const Icon(Icons.video_call)),
@@ -34,84 +59,87 @@ class PesanScreen extends StatelessWidget {
         ],
       ),
       body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
             child: ListView.builder(
-              itemCount: 5,
+              itemCount: messages.length,
               itemBuilder: (context, index) {
-                final isDosen = index % 2 == 0;
+                final message = messages[index];
+                final isFromUser = message['from'] == 1;
 
-                return Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 12,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: isDosen
-                        ? MainAxisAlignment.start
-                        : MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (isDosen)
-                        const CircleAvatar(
-                          backgroundImage: AssetImage(
-                              'assets/gambar_dosen/Azlan, S.Kom., M.Kom.jpg'),
-                          radius: 14,
+                return Row(
+                  mainAxisAlignment: isFromUser
+                      ? MainAxisAlignment.end
+                      : MainAxisAlignment.start,
+                  children: [
+                    if (!isFromUser)
+                      CircleAvatar(
+                        backgroundImage: AssetImage(chatData['avatar']),
+                        radius: 14,
+                      ),
+                    Flexible(
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(
+                          vertical: 5,
+                          horizontal: 10,
                         ),
-                      Flexible(
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          margin: const EdgeInsets.symmetric(horizontal: 10),
-                          constraints: BoxConstraints(
-                            maxWidth: MediaQuery.of(context).size.width * 0.65,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isDosen
-                                ? colorScheme.tertiary
-                                : colorScheme.primary,
-                            borderRadius: BorderRadius.only(
-                              topLeft: const Radius.circular(12),
-                              topRight: const Radius.circular(12),
-                              bottomLeft: Radius.circular(isDosen ? 0 : 12),
-                              bottomRight: Radius.circular(isDosen ? 12 : 0),
-                            ),
-                          ),
-                          child: Text(
-                            'index ke-$index ini adalah contoh chat. Silahkan ambil data chat dari file json.',
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: isDosen
-                                  ? colorScheme.onTertiary
-                                  : colorScheme.onPrimary,
-                            ),
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: isFromUser ? Colors.blue : Colors.grey[300],
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          message['message'],
+                          style: TextStyle(
+                            color: isFromUser ? Colors.white : Colors.black,
                           ),
                         ),
                       ),
-                      if (!isDosen)
-                        CircleAvatar(
-                          backgroundImage: AssetImage(
-                            DataSaya.gambar,
-                          ),
-                          radius: 14,
+                    ),
+                    if (isFromUser)
+                      CircleAvatar(
+                        backgroundImage: AssetImage(
+                          'assets/gambar_dosen/maulana.jpg',
                         ),
-                    ],
-                  ),
+                        radius: 14,
+                      ),
+                  ],
                 );
               },
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(12),
-            child: TextFormField(
-              minLines: 1,
-              maxLines: 3,
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.emoji_emotions),
-                suffixIcon: Icon(Icons.send),
-                hintText: 'Ketikkan pesan',
-                filled: true,
-              ),
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _messageController,
+                    decoration: InputDecoration(
+                      hintText: 'Ketikkan pesan...',
+                      hintStyle: const TextStyle(color: Colors.black),
+                      filled: true,
+                      fillColor: Colors.grey[200],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 10.0,
+                        horizontal: 15.0,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                CircleAvatar(
+                  backgroundColor: Theme.of(context).primaryColor,
+                  child: IconButton(
+                    icon: const Icon(Icons.send, color: Colors.white),
+                    onPressed: _sendMessage,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
